@@ -1,5 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { isTenant, clearAuth } from "../lib/auth";
+
 const checklist = [
   { label: "Verify WhatsApp Number", done: true, color: "text-emerald-400" },
   { label: "Verify Phone Number", done: true, color: "text-emerald-400" },
@@ -74,6 +78,31 @@ const aiToday = [
 ];
 
 export default function TenantDashboardPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isTenant()) {
+      router.push("/tenant-login");
+      return;
+    }
+
+    setLoading(false);
+  }, [router]);
+
+  const handleLogout = () => {
+    clearAuth();
+    router.push("/tenant-login");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#060b17] text-white flex items-center justify-center text-2xl">
+        Checking tenant access...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#060b17] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_20%),linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:auto,80px_80px,80px_80px] pointer-events-none" />
@@ -128,7 +157,7 @@ export default function TenantDashboardPage() {
             <nav className="mt-4 space-y-2">
               <a
                 href="/app"
-                className="flex w-full items-center justify-between rounded-2xl bg-emerald-500/12 px-5 py-4 text-left text-emerald-300 border border-emerald-500/15"
+                className="flex w-full items-center justify-between rounded-2xl border border-emerald-500/15 bg-emerald-500/12 px-5 py-4 text-left text-emerald-300"
               >
                 <span className="text-2xl">🏠</span>
                 <span className="ml-4 flex-1 text-xl">Overview</span>
@@ -202,13 +231,19 @@ export default function TenantDashboardPage() {
               <button className="rounded-2xl border border-[#27304a] bg-[#0c1424] px-4 py-3 text-xl text-orange-400">
                 ?
               </button>
+              <button
+                onClick={handleLogout}
+                className="rounded-2xl bg-red-500 px-5 py-3 text-lg font-semibold text-white"
+              >
+                Logout
+              </button>
             </div>
           </div>
 
           <div className="mb-6 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 px-5 py-4 text-lg text-gray-300">
             <div className="flex flex-wrap items-center gap-8">
               <span className="text-emerald-400">⚡ LIVE</span>
-              <span>med Al-Mansoori replied in Arabic — AI responding</span>
+              <span>Ahmed Al-Mansoori replied in Arabic — AI responding</span>
               <span>📞 Inbound call answered — Arabic detected — AI handling</span>
               <span>📨 New submission: Ramadan Promo 20</span>
             </div>
