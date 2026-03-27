@@ -4,26 +4,24 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// middleware
+const PORT = Number(process.env.PORT) || 5000;
+const HOST = "0.0.0.0";
+
 app.use(cors());
 app.use(express.json());
 
-// test route
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.status(200).send("Backend is running");
 });
 
-// test API
 app.get("/api/test", (req, res) => {
-  res.json({
+  res.status(200).json({
     message: "API working",
     status: "success",
   });
 });
 
-// users
 const users = [
   {
     email: "admin@test.com",
@@ -37,35 +35,39 @@ const users = [
   },
 ];
 
-// login API
 app.post("/api/login", (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const foundUser = users.find((u) => u.email === email);
+    const foundUser = users.find((u) => u.email === email);
 
-  if (!foundUser) {
-    return res.status(400).json({ message: "User not found" });
+    if (!foundUser) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = bcrypt.compareSync(password, foundUser.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { email: foundUser.email, role: foundUser.role },
+      "secretkey",
+      { expiresIn: "1h" }
+    );
+
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      role: foundUser.role,
+    });
+  } catch (error) {
+    console.error("Login route error:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  const isMatch = bcrypt.compareSync(password, foundUser.password);
-
-  if (!isMatch) {
-    return res.status(400).json({ message: "Invalid password" });
-  }
-
-  const token = jwt.sign(
-    { email: foundUser.email, role: foundUser.role },
-    "secretkey",
-    { expiresIn: "1h" }
-  );
-
-  res.json({
-    message: "Login successful",
-    token,
-    role: foundUser.role,
-  });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });
